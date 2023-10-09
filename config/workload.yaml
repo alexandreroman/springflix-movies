@@ -1,0 +1,46 @@
+apiVersion: carto.run/v1alpha1
+kind: Workload
+metadata:
+  name: springflix-movies
+  labels:
+    apps.tanzu.vmware.com/workload-type: web
+    apps.tanzu.vmware.com/has-tests: "true"
+    app.kubernetes.io/part-of: springflix-movies
+    networking.knative.dev/visibility: cluster-local
+spec:
+  source:
+    git:
+      url: https://github.com/alexandreroman/springflix-movies.git
+      ref:
+        branch: main
+  build:
+    env:
+    - name: BP_JVM_VERSION
+      value: "17"
+  resources:
+    requests:
+      cpu: 1
+      memory: 1Gi
+    limits:
+      memory: 1Gi
+  params:
+  - name: annotations
+    value:
+      autoscaling.knative.dev/minScale: "0"
+      autoscaling.knative.dev/maxScale: "3"
+      autoscaling.knative.dev/target: "5"
+      autoscaling.knative.dev/metric: "rps"
+      autoscaling.knative.dev/window: "120s"
+  - name: testing_pipeline_matching_labels
+    value:
+      apps.tanzu.vmware.com/pipeline: test
+      apps.tanzu.vmware.com/language: java
+  env:
+  - name: SPRING_CONFIG_IMPORT
+    value: ${SERVICE_BINDING_ROOT}/config/
+  serviceClaims:
+  - name: config
+    ref:
+      apiVersion: services.apps.tanzu.vmware.com/v1alpha1
+      kind: ResourceClaim
+      name: springflix-config

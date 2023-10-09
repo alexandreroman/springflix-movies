@@ -1,0 +1,10 @@
+spring:
+  cloud:
+    discovery:
+      enabled: false
+
+app:
+  tmdb:
+    api:
+      url: http://localhost:${wiremock.server.port}
+      key: fake

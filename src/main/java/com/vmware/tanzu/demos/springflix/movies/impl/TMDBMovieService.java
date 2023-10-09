@@ -1,0 +1,56 @@
+/*
+ * Copyright (c) 2023 VMware, Inc. or its affiliates
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.vmware.tanzu.demos.springflix.movies.impl;
+
+import com.vmware.tanzu.demos.springflix.movies.model.Movie;
+import com.vmware.tanzu.demos.springflix.movies.model.MovieService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+class TMDBMovieService implements MovieService {
+    private final Logger logger = LoggerFactory.getLogger(TMDBMovieService.class);
+    private final TMDBClient client;
+
+    TMDBMovieService(TMDBClient client) {
+        this.client = client;
+    }
+
+    @Override
+    public List<Movie> getUpcomingMovies(String region) {
+        final var resp = client.getUpcomingMovies(region);
+        return resp.results().stream()
+                .map(m -> new Movie(m.id(), m.title(), m.releaseDate()))
+                .sorted(Comparator.comparing(Movie::releaseDate)).toList();
+    }
+
+    @Override
+    public Optional<Movie> getMovie(String movieId) {
+        try {
+            final var m = client.getMovie(movieId);
+            return Optional.of(new Movie(m.id(), m.title(), m.releaseDate()));
+        } catch (Exception e) {
+            logger.warn("Failed to lookup movie: " + movieId);
+            return Optional.empty();
+        }
+    }
+}

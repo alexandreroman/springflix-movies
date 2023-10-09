@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: springflix-movies
+  cloud:
+    refresh:
+      enabled: false
+
+app:
+  tmdb:
+    api:
+      url: https://api.themoviedb.org
+      key:
+
+server:
+  port: ${PORT:8081}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"

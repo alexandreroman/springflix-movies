@@ -1,0 +1,78 @@
+apiVersion: carto.run/v1alpha1
+kind: Workload
+metadata:
+  name: springflix-movies
+  labels:
+    apps.tanzu.vmware.com/workload-type: web
+    apps.tanzu.vmware.com/has-tests: "true"
+    app.kubernetes.io/part-of: springflix-movies
+    networking.knative.dev/visibility: cluster-local
+spec:
+  source:
+    git:
+      url: https://github.com/alexandreroman/springflix-movies.git
+      ref:
+        branch: main
+  build:
+    env:
+    - name: BP_JVM_VERSION
+      value: "17"
+    - name: BP_NATIVE_IMAGE
+      value: "true"
+    - name: BP_MAVEN_ADDITIONAL_BUILD_ARGUMENTS
+      value: -Pnative
+    - name: MANAGEMENT_HEALTH_PROBES_ENABLED
+      value: "true"
+    - name: MANAGEMENT_ENDPOINT_HEALTH_PROBES_ADD_ADDITIONAL_PATHS
+      value: "true"
+    - name: MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS
+      value: always
+    - name: MANAGEMENT_ENDPOINTS_WEB_BASE_PATH
+      value: /actuator
+    - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+      value: '*'
+    - name: MANAGEMENT_SERVER_PORT
+      value: "8081"
+    - name: SERVER_PORT
+      value: "8080"
+  env:
+  - name: SPRING_CONFIG_IMPORT
+    value: ${SERVICE_BINDING_ROOT}/config/
+  - name: MANAGEMENT_HEALTH_PROBES_ENABLED
+    value: "true"
+  - name: MANAGEMENT_ENDPOINT_HEALTH_PROBES_ADD_ADDITIONAL_PATHS
+    value: "true"
+  - name: MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS
+    value: always
+  - name: MANAGEMENT_ENDPOINTS_WEB_BASE_PATH
+    value: /actuator
+  - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+    value: '*'
+  - name: MANAGEMENT_SERVER_PORT
+    value: "8081"
+  - name: SERVER_PORT
+    value: "8080"
+  resources:
+    requests:
+      cpu: 500m
+      memory: 256Mi
+    limits:
+      memory: 256Mi
+  params:
+  - name: annotations
+    value:
+      autoscaling.knative.dev/minScale: "0"
+      autoscaling.knative.dev/maxScale: "3"
+      autoscaling.knative.dev/target: "5"
+      autoscaling.knative.dev/metric: "rps"
+      autoscaling.knative.dev/window: "120s"
+  - name: testing_pipeline_matching_labels
+    value:
+      apps.tanzu.vmware.com/pipeline: test
+      apps.tanzu.vmware.com/language: java
+  serviceClaims:
+  - name: config
+    ref:
+      apiVersion: services.apps.tanzu.vmware.com/v1alpha1
+      kind: ResourceClaim
+      name: springflix-config
