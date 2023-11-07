@@ -17,7 +17,6 @@
 package com.vmware.tanzu.demos.springflix.movies.model;
 
 import java.time.LocalDate;
-import java.util.Date;
 
 public record Movie(String id, String title, LocalDate releaseDate) {
 }
