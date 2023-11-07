@@ -13,6 +13,9 @@ spring:
       password: ${spring.redis.password}
 
 app:
+  client:
+    connectTimeout: 30s
+    readTimeout: 30s
   cache:
     ttl: 10m
   tmdb:

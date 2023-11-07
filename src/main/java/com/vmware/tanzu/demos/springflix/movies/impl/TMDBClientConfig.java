@@ -17,12 +17,16 @@
 package com.vmware.tanzu.demos.springflix.movies.impl;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.ClientHttpRequestFactories;
+import org.springframework.boot.web.client.ClientHttpRequestFactorySettings;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.support.RestClientAdapter;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
+
+import java.time.Duration;
 
 @Configuration(proxyBeanMethods = false)
 class TMDBClientConfig {
@@ -31,8 +35,15 @@ class TMDBClientConfig {
             RestClient.Builder rcb,
             @Value("${app.tmdb.api.url}") String apiUrl,
             @Value("${app.tmdb.api.key}") String apiKey,
+            @Value("${app.client.connectTimeout}") Duration connectTimeout,
+            @Value("${app.client.readTimeout}") Duration readTimeout,
             @Value("${spring.application.name}") String appName) {
-        final var client = rcb.clone().baseUrl(apiUrl)
+        final var client = rcb.clone()
+                .baseUrl(apiUrl)
+                .requestFactory(ClientHttpRequestFactories.get(
+                        ClientHttpRequestFactorySettings.DEFAULTS
+                                .withConnectTimeout(connectTimeout)
+                                .withReadTimeout(readTimeout)))
                 .defaultHeaders(headers -> {
                     headers.set(HttpHeaders.USER_AGENT, appName);
                     headers.set(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey);
