@@ -16,14 +16,18 @@
 
 package com.vmware.tanzu.demos.springflix.movies.impl;
 
+import com.redis.testcontainers.RedisContainer;
 import com.vmware.tanzu.demos.springflix.movies.model.Movie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.LocalDate;
 
@@ -33,7 +37,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 @AutoConfigureWireMock(port = 0)
+@Testcontainers
 class MovieControllerTest {
+    @Container
+    @ServiceConnection
+    static RedisContainer redis = new RedisContainer(RedisContainer.DEFAULT_IMAGE_NAME.withTag("7"));
+
     @Autowired
     private TestRestTemplate client;
 
@@ -95,5 +104,26 @@ class MovieControllerTest {
 
         final var resp = client.getForEntity("/api/v1/movies/upcoming?region=FR", Movie[].class).getBody();
         assertThat(resp).containsExactlyInAnyOrder(m1, m2);
+        verify(1, getRequestedFor(urlEqualTo("/3/movie/upcoming?region=FR")));
+
+        // Let's see if caching is actually enabled.
+        reset();
+        stubFor(get(urlEqualTo("/3/movie/upcoming?region=FR"))
+                .willReturn(aResponse().withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                        .withBody("""
+                                {
+                                  "dates":{
+                                    "maximum":"2023-10-27",
+                                    "minimum":"2023-10-02"
+                                  },
+                                  "page":1,
+                                  "results":[],
+                                  "total_pages":1,
+                                  "total_results":0
+                                }""")));
+
+        final var resp2 = client.getForEntity("/api/v1/movies/upcoming?region=FR", Movie[].class).getBody();
+        assertThat(resp2).containsExactlyInAnyOrder(m1, m2);
+        verify(0, getRequestedFor(urlEqualTo("/3/movie/upcoming?region=FR")));
     }
 }

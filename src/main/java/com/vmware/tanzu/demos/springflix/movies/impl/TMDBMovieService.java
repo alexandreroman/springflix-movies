@@ -20,6 +20,8 @@ import com.vmware.tanzu.demos.springflix.movies.model.Movie;
 import com.vmware.tanzu.demos.springflix.movies.model.MovieService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -36,6 +38,7 @@ class TMDBMovieService implements MovieService {
     }
 
     @Override
+    @Cacheable(value = "movies.upcoming", key = "#region")
     public List<Movie> getUpcomingMovies(String region) {
         final var resp = client.getUpcomingMovies(region);
         return resp.results().stream()
@@ -44,6 +47,7 @@ class TMDBMovieService implements MovieService {
     }
 
     @Override
+    @Cacheable(value = "movie", key = "#movieId")
     public Optional<Movie> getMovie(String movieId) {
         try {
             final var m = client.getMovie(movieId);

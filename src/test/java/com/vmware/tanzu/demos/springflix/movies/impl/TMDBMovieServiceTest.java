@@ -16,13 +16,17 @@
 
 package com.vmware.tanzu.demos.springflix.movies.impl;
 
+import com.redis.testcontainers.RedisContainer;
 import com.vmware.tanzu.demos.springflix.movies.model.Movie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.LocalDate;
 
@@ -32,7 +36,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @ActiveProfiles("test")
 @AutoConfigureWireMock(port = 0)
+@Testcontainers
 class TMDBMovieServiceTest {
+    @Container
+    @ServiceConnection
+    static RedisContainer redis = new RedisContainer(RedisContainer.DEFAULT_IMAGE_NAME.withTag("7"));
+
     @Autowired
     private TMDBMovieService ms;
 
