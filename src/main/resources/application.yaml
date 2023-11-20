@@ -23,3 +23,20 @@ management:
     web:
       exposure:
         include: "*"
+  otlp:
+    metrics:
+      export:
+        enabled: false
+
+---
+
+spring:
+  config:
+    activate:
+      on-cloud-platform: kubernetes
+
+management:
+  otlp:
+    metrics:
+      export:
+        enabled: true
