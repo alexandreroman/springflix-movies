@@ -37,7 +37,7 @@ spec:
       value: "8080"
   env:
   - name: SPRING_CONFIG_IMPORT
-    value: ${SERVICE_BINDING_ROOT}/config/
+    value: optional:configtree:/${SERVICE_BINDING_ROOT}/config/
   - name: MANAGEMENT_HEALTH_PROBES_ENABLED
     value: "true"
   - name: MANAGEMENT_ENDPOINT_HEALTH_PROBES_ADD_ADDITIONAL_PATHS

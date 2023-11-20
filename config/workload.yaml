@@ -37,7 +37,7 @@ spec:
       apps.tanzu.vmware.com/language: java
   env:
   - name: SPRING_CONFIG_IMPORT
-    value: ${SERVICE_BINDING_ROOT}/config/
+    value: optional:configtree:/${SERVICE_BINDING_ROOT}/config/
   serviceClaims:
   - name: config
     ref:
