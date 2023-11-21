@@ -18,6 +18,10 @@ app:
 server:
   port: ${PORT:8081}
 
+springdoc:
+  api-docs:
+    path: /api/openapi
+
 management:
   endpoints:
     web:
