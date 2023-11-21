@@ -16,7 +16,11 @@
 
 package com.vmware.tanzu.demos.springflix.movies.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.time.LocalDate;
 
-public record Movie(String id, String title, LocalDate releaseDate) {
+public record Movie(String id, String title,
+                    @JsonFormat(pattern = "yyyy-MM-dd")
+                    LocalDate releaseDate) {
 }
