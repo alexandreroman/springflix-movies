@@ -18,6 +18,8 @@ package com.vmware.tanzu.demos.springflix.movies.impl;
 
 import com.vmware.tanzu.demos.springflix.movies.model.Movie;
 import com.vmware.tanzu.demos.springflix.movies.model.MovieService;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
@@ -31,14 +33,22 @@ import java.util.Optional;
 class TMDBMovieService implements MovieService {
     private final Logger logger = LoggerFactory.getLogger(TMDBMovieService.class);
     private final TMDBClient client;
+    private final ObservationRegistry observationRegistry;
 
-    TMDBMovieService(TMDBClient client) {
+    TMDBMovieService(TMDBClient client, ObservationRegistry observationRegistry) {
         this.client = client;
+        this.observationRegistry = observationRegistry;
     }
 
     @Override
     @Cacheable(value = "movies.upcoming", key = "#region")
     public List<Movie> getUpcomingMovies(String region) {
+        return Observation.createNotStarted("tmdb.upcomingMovies", observationRegistry)
+                .lowCardinalityKeyValue("region", region)
+                .observe(() -> doGetUpcomingMovies(region));
+    }
+
+    private List<Movie> doGetUpcomingMovies(String region) {
         final var resp = client.getUpcomingMovies(region);
         return resp.results().stream()
                 .map(m -> new Movie(m.id(), m.title(), m.releaseDate()))
@@ -48,6 +58,12 @@ class TMDBMovieService implements MovieService {
     @Override
     @Cacheable(value = "movie", key = "#movieId")
     public Optional<Movie> getMovie(String movieId) {
+        return Observation.createNotStarted("tmdb.movie", observationRegistry)
+                .highCardinalityKeyValue("movie", movieId)
+                .observe(() -> doGetMovie(movieId));
+    }
+
+    private Optional<Movie> doGetMovie(String movieId) {
         try {
             final var m = client.getMovie(movieId);
             return Optional.of(new Movie(m.id(), m.title(), m.releaseDate()));
