@@ -28,24 +28,38 @@ springdoc:
     path: /api/openapi
 
 management:
+  observations:
+    key-values: &tags
+      application: ${spring.application.name}
+      service: ${spring.application.name}
+      source: ${spring.application.name}-${random.uuid}
+  metrics:
+    tags: *tags
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+  tracing:
+    sampling:
+      probability: 0.1
+  otlp:
+    metrics:
+      export:
+        step: 30s
+        url: http://localhost:4318/v1/metrics
+    tracing:
+      endpoint: http://localhost:4318/v1/traces
   endpoints:
     web:
       exposure:
-        include: "*"
-  otlp:
-    metrics:
-      export:
-        enabled: false
+        include: health, info
 
----
-
-spring:
-  config:
-    activate:
-      on-cloud-platform: kubernetes
-
-management:
-  otlp:
-    metrics:
-      export:
-        enabled: true
+logging:
+  level:
+    io:
+      micrometer:
+        registry:
+          otlp: off
+      opentelemetry:
+        exporter:
+          internal:
+            http: off
